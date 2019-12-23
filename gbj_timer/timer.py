@@ -17,6 +17,7 @@ __email__ = 'libor.gabaj@gmail.com'
 
 import threading
 import logging
+from typing import NoReturn
 
 
 ###############################################################################
@@ -66,7 +67,7 @@ class Timer(object):
     _instances = 0
     """int: Number of class instances."""
 
-    def __init__(self, period: float, callback, *args, **kwargs):
+    def __init__(self, period: float, callback, *args, **kwargs) -> NoReturn:
         """Create the class instance - constructor."""
         type(self)._instances += 1
         self.period = period
@@ -101,7 +102,7 @@ class Timer(object):
         self._logger.debug(
             f'Instance of "{self.__class__.__name__}" created: {self}')
 
-    def __del__(self):
+    def __del__(self) -> NoReturn:
         """Clean after instance destroying - destructor.
 
         Notes
@@ -112,7 +113,7 @@ class Timer(object):
         """
         type(self)._instances -= 1
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Represent instance object as a string.
 
         All the relevant timer's parameters are involved in the string, i.e.,
@@ -127,7 +128,7 @@ class Timer(object):
             f'{self._order})'
         return msg
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Represent instance object officially."""
         if len(self._callbacks) > 1:
             cblist = [c.__name__ for c in self._callbacks]
@@ -152,14 +153,14 @@ class Timer(object):
         return self._period
 
     @period.setter
-    def period(self, period: float):
+    def period(self, period: float) -> NoReturn:
         """Sanitize and set new timer period in seconds."""
         try:
             self._period = abs(float(period))
         except (ValueError, TypeError):
             pass
 
-    def _create_timer(self):
+    def _create_timer(self) -> NoReturn:
         """Create new timer object and start it."""
         if self.period is None:
             errmsg = f'Timer "{self.name}" cannot be started' \
@@ -170,7 +171,7 @@ class Timer(object):
             self._timer.name = self.name
             self._timer.start()
 
-    def _run_callback(self):
+    def _run_callback(self) -> NoReturn:
         """Run external instance callback.
 
         Other Parameters
@@ -223,7 +224,7 @@ class Timer(object):
                 if self._count is not None:
                     self._count -= 1
 
-    def start(self):
+    def start(self) -> NoReturn:
         """Create timer thread object and store it in the instance."""
         if (self._count or 1) <= 0:
             self._logger.debug(f'"{self}" not started')
@@ -232,14 +233,14 @@ class Timer(object):
             self._create_timer()
             self._logger.debug(f'"{self}" started')
 
-    def stop(self):
+    def stop(self) -> NoReturn:
         """Destroy timer thread object."""
         self._stopping = True
         if self._timer is not None:
             self._timer.cancel()
             self._logger.debug(f'"{self}" stopped')
 
-    def prescaler(self, factor: int, callback, *args, **kwargs):
+    def prescaler(self, factor: int, callback, *args, **kwargs) -> NoReturn:
         """Register a callback function called at each factor tick.
 
         Arguments
