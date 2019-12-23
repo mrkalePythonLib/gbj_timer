@@ -58,10 +58,6 @@ class Timer(object):
       marked with ``O`` as ``oneshot`` in the string instance representation.
     - Keyword arguments not listed here are passed to the callback function(s).
 
-    See Also
-    --------
-    register_timer : Registration of timers.
-
     """
 
     _instances = 0
