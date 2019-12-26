@@ -5,7 +5,7 @@ A prescaler can be considered as a timer period divider and can run its own
 callbacks separately from the timer's callbacks.
 
 """
-__version__ = '0.1.0'
+__version__ = '0.5.0'
 __status__ = 'Beta'
 __author__ = 'Libor Gabaj'
 __copyright__ = 'Copyright 2018-2019, ' + __author__
