@@ -23,7 +23,7 @@ from typing import NoReturn
 ###############################################################################
 # Classes
 ###############################################################################
-class Timer(object):
+class Timer():
     """Creating and registering a timer.
 
     Arguments
@@ -76,8 +76,8 @@ class Timer(object):
         # Sanitize name
         self._order = type(self)._instances
         self._count = self._kwargs.pop('count', None)
-        self.name = self._kwargs.pop('name',
-            f'{self.__class__.__name__}{self._order}')
+        name = f'{self.__class__.__name__}{self._order}'
+        self.name = self._kwargs.pop('name', name)
         #
         self.prescalers = []
         self._timer = None
@@ -94,9 +94,9 @@ class Timer(object):
                 self._mark = 'O'
                 self._repeate = False   # Flag about on-shot timer
         # Logging
+        msg = f'Instance of "{self.__class__.__name__}" created: {self}'
         self._logger = logging.getLogger(' '.join([__name__, __version__]))
-        self._logger.debug(
-            f'Instance of "{self.__class__.__name__}" created: {self}')
+        self._logger.debug(msg)
 
     def __del__(self) -> NoReturn:
         """Clean after instance destroying - destructor.
@@ -128,13 +128,13 @@ class Timer(object):
         """Represent instance object officially."""
         if len(self._callbacks) > 1:
             cblist = [c.__name__ for c in self._callbacks]
-            cb = f'({", ".join(cblist)})'
+            cbf = f'({", ".join(cblist)})'
         else:
-            cb = self._callbacks[0].__name__
+            cbf = self._callbacks[0].__name__
         msg = \
             f'{self.__class__.__name__}(' \
             f'period={repr(self.period)}, ' \
-            f'callback={cb}, ' \
+            f'callback={cbf}, ' \
             f'count={repr(self._count)}, ' \
             f'name={repr(self.name)}, ' \
             f'args={repr(self._args)}, ' \
@@ -156,6 +156,11 @@ class Timer(object):
         except (ValueError, TypeError):
             pass
 
+    @property
+    def repeating(self):
+        """Flag about repeating timing or last call at countdown timer."""
+        return self._repeate
+
     def _create_timer(self) -> NoReturn:
         """Create new timer object and start it."""
         if self.period is None:
@@ -168,15 +173,7 @@ class Timer(object):
             self._timer.start()
 
     def _run_callback(self) -> NoReturn:
-        """Run external instance callback.
-
-        Other Parameters
-        ----------------
-        exec_last : bool
-            Flag about last calling at countdown timers injected to all
-            callback function as a keyword argument.
-
-        """
+        """Run external instance callback."""
         if self._callbacks is None:
             return
         if self._count is not None:
@@ -184,57 +181,46 @@ class Timer(object):
                 return
             if self._count == 1:
                 self._repeate = False
-        try:
-            # Call basic timer callback
-            for callback in self._callbacks:
-                msg = f'Main callback "{callback.__name__}"' \
-                    f' of "{self}" launched'
-                self._logger.debug(msg)
-                callback(
-                    *self._args,
-                    exec_last=not self._repeate,
-                    **self._kwargs
-                )
-            # Count down prescalers and call callbacks of expired ones
-            for prescaler in self.prescalers:
-                prescaler['counter'] -= 1
-                if prescaler['counter'] <= 0:
-                    prescaler['counter'] = prescaler['factor']
-                    callbacks = prescaler['callbacks']
-                    for callback in callbacks:
-                        msg = f'Prescaler {prescaler["factor"]}' \
-                            f' callback "{callback.__name__}"' \
-                            f' of "{self}" launched'
-                        self._logger.debug(msg)
-                        callback(
-                            *prescaler['args'],
-                            exec_last=not self._repeate,
-                            **prescaler['kwargs']
-                        )
-        except Exception:
-            errmsg = f'Running callbacks of "{self}" failed:'
-            self._logger.error(errmsg, exc_info=True)
-        finally:
-            if self._repeate:
-                self._create_timer()
-                if self._count is not None:
-                    self._count -= 1
+        # Call basic timer callback
+        for callback in self._callbacks:
+            msg = f'Main callback "{callback.__name__}"' \
+                f' of "{self}" launched'
+            self._logger.debug(msg)
+            callback(*self._args, **self._kwargs)
+        # Count down prescalers and call callbacks of expired ones
+        for prescaler in self.prescalers:
+            prescaler['counter'] -= 1
+            if prescaler['counter'] <= 0:
+                prescaler['counter'] = prescaler['factor']
+                callbacks = prescaler['callbacks']
+                for callback in callbacks:
+                    msg = f'Prescaler {prescaler["factor"]}' \
+                        f' callback "{callback.__name__}"' \
+                        f' of "{self}" launched'
+                    self._logger.debug(msg)
+                    callback(*prescaler['args'], **prescaler['kwargs'])
+        if self._repeate:
+            self._create_timer()
+            if self._count is not None:
+                self._count -= 1
 
     def start(self) -> NoReturn:
         """Create timer thread object and store it in the instance."""
         if (self._count or 1) <= 0:
-            self._logger.debug(f'"{self}" not started')
-            return
+            msg = f'"{self}" not started'
+            self._logger.debug(msg)
         else:
+            msg = f'"{self}" started'
             self._create_timer()
-            self._logger.debug(f'"{self}" started')
+            self._logger.debug(msg)
 
     def stop(self) -> NoReturn:
         """Destroy timer thread object."""
         self._stopping = True
         if self._timer is not None:
+            msg = f'"{self}" stopped'
             self._timer.cancel()
-            self._logger.debug(f'"{self}" stopped')
+            self._logger.debug(msg)
 
     def prescaler(self, factor: int, callback, *args, **kwargs) -> NoReturn:
         """Register a callback function called at each factor tick.
