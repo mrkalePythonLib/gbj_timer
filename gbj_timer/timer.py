@@ -66,7 +66,7 @@ class Timer():
     def __init__(self, period: float, callback, *args, **kwargs) -> NoReturn:
         """Create the class instance - constructor."""
         type(self)._instances += 1
-        self.period = period
+        self._period = period
         self._args = args
         self._kwargs = kwargs
         # Sanitize callbacks
@@ -118,7 +118,7 @@ class Timer():
         """
         log = \
             f'{self.name}(' \
-            f'{float(self.period)}s-' \
+            f'{float(self._period)}s-' \
             f'{self._mark}' \
             f'{"" if self._count is None else str(self._count)}-' \
             f'{self._order})'
@@ -133,7 +133,7 @@ class Timer():
             cbf = self._callbacks[0].__name__
         log = \
             f'{self.__class__.__name__}(' \
-            f'period={repr(self.period)}, ' \
+            f'period={repr(self._period)}, ' \
             f'callback={cbf}, ' \
             f'count={repr(self._count)}, ' \
             f'name={repr(self.name)}, ' \
@@ -144,8 +144,6 @@ class Timer():
     @property
     def period(self) -> float:
         """Current timer period in seconds."""
-        if not hasattr(self, '_period'):
-            self._period = None
         return self._period
 
     @period.setter
@@ -163,13 +161,13 @@ class Timer():
 
     def _create_timer(self) -> NoReturn:
         """Create new timer object and start it."""
-        if self.period is None:
+        if self._period is None:
             log = \
                 f'Timer {self.name} cannot be started' \
                 f' due to undefined time period.'
             self._logger.warning(log)
         if not self._stopping:
-            self._timer = threading.Timer(self.period, self._run_callback)
+            self._timer = threading.Timer(self._period, self._run_callback)
             self._timer.name = self.name
             self._timer.start()
 
